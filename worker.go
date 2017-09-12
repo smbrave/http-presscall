@@ -7,6 +7,8 @@ import (
 
 	"log"
 
+	"fmt"
+
 	"github.com/juju/ratelimit"
 	"github.com/toolkits/net/httplib"
 )
@@ -18,18 +20,24 @@ type result_t struct {
 }
 
 //压测工作
-func Worker(host string, method string, data chan string, result chan *result_t) {
-
+func Worker(data chan string, result chan *result_t) {
+	host := *flag_host
+	method := *flag_method
+	timeout := *flag_timeout
 	for {
 		select {
-		case <-data:
+		case line := <-data:
 			start := time.Now()
 			var client *httplib.BeegoHttpRequest = nil
 			if strings.ToUpper(method) == "POST" {
 				client = httplib.Post(host)
+				client.Header("Content-Type", "application/x-www-form-urlencoded")
+				client.Body(line)
 			} else {
-				client = httplib.Get(host)
+				client = httplib.Get(fmt.Sprintf("%s?%s", host, line))
+				client.Header("Content-Type", "application/x-www-form-urlencoded")
 			}
+			client.SetTimeout(time.Duration(timeout)*time.Second, time.Duration(timeout)*time.Second)
 			_, err := client.Bytes()
 			result <- &result_t{Err: err, Cost: time.Now().Sub(start)}
 		}
@@ -37,7 +45,9 @@ func Worker(host string, method string, data chan string, result chan *result_t)
 }
 
 //读取压测数据
-func Reader(ch chan string, qps int, data_file string) {
+func Reader(ch chan string) {
+	qps := *flag_qps
+	data_file := *flag_file
 	data, err := ioutil.ReadFile(data_file)
 	if err != nil {
 		panic(err)
