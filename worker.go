@@ -80,29 +80,42 @@ func Result(result chan *result_t) {
 	var pre_cost int64
 
 	var prestat = time.Now()
+	var preerror = time.Now()
+
+	//统计函数
+	stat := func(err error) {
+		cur := time.Now()
+		if cur.Sub(prestat).Seconds() >= 1 {
+			prestat = cur
+			log.Printf("total[%d] error[%d] avg[%.2f]ms",
+				succ_num-pre_succ_num, fail_num-pre_fail_num,
+				float64(cost-pre_cost)/(float64(succ_num-pre_succ_num)*float64(1000000)),
+			)
+			pre_succ_num = succ_num
+			pre_fail_num = fail_num
+			pre_cost = cost
+		}
+
+		if err != nil {
+			if cur.Sub(preerror).Seconds() >= 10 {
+				log.Printf("error:%s", err.Error())
+				preerror = cur
+			}
+		}
+	}
 
 	for {
 		select {
 		case res := <-result:
 			if res.Err != nil {
 				fail_num += 1
+				stat(res.Err)
 				continue
 			}
-
+			stat(nil)
 			succ_num += 1
 			cost += res.Cost.Nanoseconds()
-			cur := time.Now()
 
-			if cur.Sub(prestat).Seconds() >= 1 {
-				prestat = cur
-				log.Printf("total[%d] error[%d] avg[%.2f]ms",
-					succ_num-pre_succ_num, fail_num-pre_fail_num,
-					float64(cost-pre_cost)/(float64(succ_num-pre_succ_num)*float64(1000000)),
-				)
-				pre_succ_num = succ_num
-				pre_fail_num = fail_num
-				pre_cost = cost
-			}
 		}
 	}
 }
