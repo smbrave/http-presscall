@@ -1,7 +1,7 @@
 #http压测工具
 
 ```bash
-./http-presscall -file=./requst.dat -host="http://10.95.116.47:8010/es/search/all" -qps=10 -worker=100
+./http-presscall -file=./requst.dat -url="http://10.95.116.47:8010/es/search/all" -qps=10 -worker=100
 
 ```
 

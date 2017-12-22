@@ -9,7 +9,7 @@ var (
 	flag_qps     = flag.Int("qps", 10, "qps for http presscall")
 	flag_file    = flag.String("file", "", "file for presscall data")
 	flag_worker  = flag.Int("worker", 1000, "worker for http request")
-	flag_host    = flag.String("host", "", "host for http request")
+	flag_url    = flag.String("url", "", "url for http request")
 	flag_timeout = flag.Int("timeout", 1, "timeout for http")
 )
 
